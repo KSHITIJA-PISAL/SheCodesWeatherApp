@@ -6,17 +6,20 @@ function displayTemperature(response) {
   let temperatureElement = document.querySelector("#current-temperature-value");
   let temperature = Math.round(response.data.temperature.current);
   let cityElement = document.querySelector("#current-city");
-  cityElement.innerHTML = response.data.city;
-  temperatureElement.innerHTML = temperature;
   let weatherConditionElement = document.getElementById("weather-condition");
-  weatherConditionElement.innerHTML = response.data.condition.description;
   let humidityElement = document.getElementById("humidity");
-  humidityElement.innerHTML = `${response.data.temperature.humidity}%`;
   let windElement = document.getElementById("wind");
-  windElement.innerHTML = `${response.data.wind.speed}km/h`;
   let temperatureIconElement = document.querySelector("div.icon");
   let icon = `<img src="${response.data.condition.icon_url}" alt="temperature-icon" class="current-temperature-icon"/>`;
+
+  cityElement.innerHTML = response.data.city;
+  temperatureElement.innerHTML = temperature;
+  weatherConditionElement.innerHTML = response.data.condition.description;
+  humidityElement.innerHTML = `${response.data.temperature.humidity}%`;
+  windElement.innerHTML = `${response.data.wind.speed}km/h`;
   temperatureIconElement.innerHTML = icon;
+
+  getWeather(response.data.city);
 }
 
 function search(city) {
@@ -58,7 +61,44 @@ function formatDate(date) {
   let formattedDay = days[day];
   return `${formattedDay} ${hours}:${minutes}`;
 }
+
+function formatDay(timestamp) {
+  let date = new Date(timestamp * 1000);
+  let days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
+  return days[date.getDay()];
+}
+
+function getWeather(city) {
+  let apiKey = "56o2906a0t61a8ff7156f04abcebf432";
+  let apiUrl = `https://api.shecodes.io/weather/v1/forecast?query=${city}&key=${apiKey}`;
+  axios(apiUrl).then(weatherForecast);
+}
+
+function weatherForecast(response) {
+  let weatherForecast = "";
+  response.data.daily.forEach(function (day, index) {
+    if (index != 0 && index < 6) {
+      weatherForecast += `
+          <div class="weather-forecast-day">
+            <div class="weather-forecast-date">${formatDay(day.time)}</div>
+            <img src="${day.condition.icon_url}" class="weather-forecast-icon"/>
+            <div class="weather-forecast-temperatures">
+              <div class="weather-forecast-temperature">
+                <strong>${Math.round(day.temperature.maximum)}°</strong>
+              </div>
+              <div class="weather-forecast-temperature">${Math.round(
+                day.temperature.minimum
+              )}°</div>
+            </div>
+          </div>`;
+    }
+  });
+  let forecast = document.querySelector("#forecast");
+  forecast.innerHTML = weatherForecast;
+}
+
 let currentDateElement = document.querySelector("#current-date");
 let currentDate = new Date();
 
 currentDateElement.innerHTML = formatDate(currentDate);
+weatherForecast();
